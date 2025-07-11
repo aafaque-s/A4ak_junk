@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ようこそ友達 - Enhanced Media Player</title>
+    <title>ようこそ友達 - Enhanced Streaming</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -490,6 +490,109 @@
             border: none;
         }
 
+        /* NEW: Player Controls */
+        .player-controls {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            border-top: 1px solid rgba(0, 255, 65, 0.1);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Legal Disclaimer Modal */
+        .disclaimer-content {
+            max-width: 500px;
+            padding: 30px;
+        }
+
+        .disclaimer-content h2 {
+            color: #ff5555;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .disclaimer-content ul {
+            margin: 15px 0 20px 20px;
+        }
+
+        .disclaimer-content li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .disclaimer-content p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        /* TV Show Selection Columns */
+        .season-episode-container {
+            display: flex;
+            gap: 15px;
+            max-height: 300px;
+            overflow: hidden;
+        }
+
+        .seasons-column, .episodes-column {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+        }
+
+        .seasons-column {
+            max-width: 40%;
+        }
+
+        .season-item, .episode-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 255, 65, 0.1);
+        }
+
+        .season-item:hover, .episode-item:hover {
+            background: rgba(0, 255, 65, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .season-item.active {
+            background: rgba(0, 255, 65, 0.2);
+            border-color: #00ff41;
+        }
+
+        .season-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .season-episodes {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .episode-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .episode-number {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .column-header {
+            font-weight: 500;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .container {
@@ -535,6 +638,21 @@
             .player-container {
                 margin: 30px 0;
             }
+
+            .season-episode-container {
+                flex-direction: column;
+                max-height: 400px;
+            }
+
+            .seasons-column {
+                max-width: 100%;
+            }
+            
+            /* NEW: Mobile player controls */
+            .player-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -578,6 +696,35 @@
     </style>
 </head>
 <body>
+    <!-- Legal Disclaimer Modal -->
+    <div class="modal show" id="disclaimerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">⚠️ Legal & Usage Disclaimer</h2>
+            </div>
+            <div class="modal-body">
+                <p>Please read this disclaimer carefully before using this application:</p>
+                
+                <ul>
+                    <li><strong>Third-Party Content</strong>: This application provides access to third-party content. We do not host, store, or distribute any media files on our servers. Users are solely responsible for verifying the legality of any content they access according to their local laws.</li>
+                    
+                    <li><strong>Personal Use Only</strong>: For personal and educational use only. Avoid public distribution or mass sharing.</li>
+                    
+                    <li><strong>Use a VPN</strong>: Always connect through a reliable VPN to protect your privacy and comply with local regulations.</li>
+                    
+                    <li><strong>No App Store Publishing</strong>: Do not upload or distribute this app on app stores or public platforms. Doing so may violate intellectual property laws.</li>
+                    
+                    <li><strong>Legal Consultation Recommended</strong>: Planning a public release? Consult a qualified intellectual property attorney to ensure compliance with copyright and content distribution laws.</li>
+                </ul>
+                
+                <p>By using this application, you acknowledge and agree to these terms.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="acceptDisclaimer">I Understand & Agree</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <div class="logo">ようこそ友達</div>
@@ -606,8 +753,14 @@
             <div class="player-frame-container">
                 <iframe class="player-frame" id="mediaPlayer" allowfullscreen></iframe>
             </div>
+            <!-- NEW: Player Controls -->
+            <div class="player-controls" id="playerControls">
+                <button class="btn" id="changeSeasonBtn">Change Season</button>
+                <button class="btn" id="changeEpisodeBtn">Change Episode</button>
+            </div>
         </div>
 
+        <!-- Updated Season/Episode Selection Modal -->
         <div class="modal" id="seasonModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -615,23 +768,21 @@
                     <p class="modal-subtitle" id="modalSubtitle">Choose your episode</p>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label" for="seasonSelect">Season</label>
-                        <select class="form-select" id="seasonSelect">
-                            <option value="">Loading seasons...</option>
-                        </select>
+                    <div class="loading-text" id="loadingText">Loading seasons and episodes...</div>
+                    
+                    <div class="season-episode-container" id="seasonEpisodeContainer" style="display: none;">
+                        <div class="seasons-column">
+                            <div class="column-header">Seasons</div>
+                            <div id="seasonsList"></div>
+                        </div>
+                        <div class="episodes-column">
+                            <div class="column-header">Episodes</div>
+                            <div id="episodesList"></div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="episodeSelect">Episode</label>
-                        <select class="form-select" id="episodeSelect">
-                            <option value="">Select season first</option>
-                        </select>
-                    </div>
-                    <div class="loading-text" id="loadingText" style="display: none;">Loading episodes...</div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn" onclick="closeModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="watchSelected()">Watch Now</button>
                 </div>
             </div>
         </div>
@@ -648,6 +799,16 @@
                 this.playerTitle = document.getElementById('playerTitle');
                 this.closePlayer = document.getElementById('closePlayer');
                 this.currentTvShow = null;
+                this.currentSeason = null;
+                this.currentEpisode = null;
+                this.seasonsList = document.getElementById('seasonsList');
+                this.episodesList = document.getElementById('episodesList');
+                this.seasonEpisodeContainer = document.getElementById('seasonEpisodeContainer');
+                this.loadingText = document.getElementById('loadingText');
+                this.disclaimerModal = document.getElementById('disclaimerModal');
+                this.playerControls = document.getElementById('playerControls');
+                this.changeSeasonBtn = document.getElementById('changeSeasonBtn');
+                this.changeEpisodeBtn = document.getElementById('changeEpisodeBtn');
                 
                 this.init();
             }
@@ -673,15 +834,29 @@
                     }, 500);
                 });
 
-                document.getElementById('seasonSelect').addEventListener('change', (e) => {
-                    const seasonNumber = e.target.value;
-                    if (seasonNumber && this.currentTvShow) {
-                        this.loadEpisodes(this.currentTvShow.id, seasonNumber);
-                    }
-                });
-
                 this.closePlayer.addEventListener('click', () => {
                     this.closePlayerContainer();
+                });
+                
+                // Accept disclaimer button
+                document.getElementById('acceptDisclaimer').addEventListener('click', () => {
+                    this.disclaimerModal.classList.remove('show');
+                    setTimeout(() => {
+                        this.disclaimerModal.style.display = 'none';
+                    }, 300);
+                });
+                
+                // Season/Episode buttons
+                this.changeSeasonBtn.addEventListener('click', () => {
+                    if (this.currentTvShow) {
+                        this.openSeasonModal(this.currentTvShow);
+                    }
+                });
+                
+                this.changeEpisodeBtn.addEventListener('click', () => {
+                    if (this.currentTvShow && this.currentSeason) {
+                        document.getElementById('seasonModal').classList.add('show');
+                    }
                 });
             }
 
@@ -756,16 +931,25 @@
                 this.playerTitle.textContent = movie.title;
                 this.mediaPlayer.src = url;
                 this.playerContainer.classList.add('show');
+                this.playerControls.style.display = 'none'; // Hide controls for movies
                 this.scrollToPlayer();
             }
 
             async openSeasonModal(tvShow) {
                 this.currentTvShow = tvShow;
+                this.currentSeason = null;
+                this.currentEpisode = null;
                 
                 document.getElementById('modalTitle').textContent = `${tvShow.name || tvShow.title}`;
                 document.getElementById('modalSubtitle').textContent = 'Choose your episode';
                 
                 document.getElementById('seasonModal').classList.add('show');
+                
+                // Show loading and hide columns
+                this.loadingText.style.display = 'block';
+                this.seasonEpisodeContainer.style.display = 'none';
+                this.seasonsList.innerHTML = '';
+                this.episodesList.innerHTML = '';
                 
                 await this.loadSeasons(tvShow.id);
             }
@@ -775,54 +959,90 @@
                     const response = await fetch(`https://api.themoviedb.org/3/tv/${tvId}?api_key=${this.apiKey}`);
                     const data = await response.json();
                     
-                    const seasonSelect = document.getElementById('seasonSelect');
-                    const episodeSelect = document.getElementById('episodeSelect');
+                    // Filter out seasons with season_number > 0
+                    const validSeasons = data.seasons.filter(season => season.season_number > 0);
                     
-                    seasonSelect.innerHTML = '<option value="">Select Season</option>';
-                    episodeSelect.innerHTML = '<option value="">Select season first</option>';
-                    
-                    data.seasons.forEach(season => {
-                        if (season.season_number > 0) {
-                            const option = document.createElement('option');
-                            option.value = season.season_number;
-                            option.textContent = `Season ${season.season_number} (${season.episode_count} episodes)`;
-                            seasonSelect.appendChild(option);
-                        }
-                    });
-                    
+                    if (validSeasons.length > 0) {
+                        this.loadingText.style.display = 'none';
+                        this.seasonEpisodeContainer.style.display = 'flex';
+                        
+                        validSeasons.forEach(season => {
+                            const seasonElement = document.createElement('div');
+                            seasonElement.className = 'season-item';
+                            seasonElement.innerHTML = `
+                                <div class="season-title">${season.name}</div>
+                                <div class="season-episodes">${season.episode_count} episodes</div>
+                            `;
+                            
+                            seasonElement.addEventListener('click', () => {
+                                this.selectSeason(season);
+                            });
+                            
+                            this.seasonsList.appendChild(seasonElement);
+                        });
+                        
+                        // Select first season by default
+                        this.selectSeason(validSeasons[0]);
+                    } else {
+                        this.loadingText.innerHTML = 'No seasons available';
+                    }
                 } catch (error) {
                     console.error('Error loading seasons:', error);
-                    document.getElementById('seasonSelect').innerHTML = '<option value="">Error loading seasons</option>';
+                    this.loadingText.innerHTML = 'Error loading seasons';
                 }
+            }
+            
+            selectSeason(season) {
+                this.currentSeason = season;
+                
+                // Highlight selected season
+                document.querySelectorAll('.season-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.target.closest('.season-item').classList.add('active');
+                
+                this.loadEpisodes(this.currentTvShow.id, season.season_number);
             }
 
             async loadEpisodes(tvId, seasonNumber) {
-                const loadingText = document.getElementById('loadingText');
-                const episodeSelect = document.getElementById('episodeSelect');
-                
-                loadingText.style.display = 'block';
-                episodeSelect.innerHTML = '<option value="">Loading episodes...</option>';
+                this.episodesList.innerHTML = '<div class="loading-text">Loading episodes...</div>';
                 
                 try {
                     const response = await fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNumber}?api_key=${this.apiKey}`);
                     const data = await response.json();
                     
-                    episodeSelect.innerHTML = '<option value="">Select Episode</option>';
+                    this.episodesList.innerHTML = '';
                     
                     data.episodes.forEach(episode => {
-                        const option = document.createElement('option');
-                        option.value = episode.episode_number;
-                        option.textContent = `Episode ${episode.episode_number}: ${episode.name}`;
-                        episodeSelect.appendChild(option);
+                        const episodeElement = document.createElement('div');
+                        episodeElement.className = 'episode-item';
+                        episodeElement.innerHTML = `
+                            <div class="episode-title">${episode.name}</div>
+                            <div class="episode-number">Episode ${episode.episode_number}</div>
+                        `;
+                        
+                        episodeElement.addEventListener('click', () => {
+                            this.playEpisode(episode);
+                        });
+                        
+                        this.episodesList.appendChild(episodeElement);
                     });
-                    
-                    loadingText.style.display = 'none';
                     
                 } catch (error) {
                     console.error('Error loading episodes:', error);
-                    episodeSelect.innerHTML = '<option value="">Error loading episodes</option>';
-                    loadingText.style.display = 'none';
+                    this.episodesList.innerHTML = '<div class="error">Error loading episodes</div>';
                 }
+            }
+            
+            playEpisode(episode) {
+                this.currentEpisode = episode;
+                const url = `https://vidfast.pro/tv/${this.currentTvShow.id}/${this.currentSeason.season_number}/${episode.episode_number}`;
+                this.playerTitle.textContent = `${this.currentTvShow.name || this.currentTvShow.title} - S${this.currentSeason.season_number}E${episode.episode_number}`;
+                this.mediaPlayer.src = url;
+                this.playerContainer.classList.add('show');
+                this.playerControls.style.display = 'flex'; // Show controls for TV shows
+                this.scrollToPlayer();
+                closeModal();
             }
 
             scrollToPlayer() {
@@ -832,6 +1052,7 @@
             closePlayerContainer() {
                 this.playerContainer.classList.remove('show');
                 this.mediaPlayer.src = '';
+                this.playerControls.style.display = 'none';
             }
 
             escapeHtml(text) {
@@ -875,28 +1096,6 @@
 
         function closeModal() {
             document.getElementById('seasonModal').classList.remove('show');
-        }
-
-        function watchSelected() {
-            const seasonSelect = document.getElementById('seasonSelect');
-            const episodeSelect = document.getElementById('episodeSelect');
-            
-            const season = seasonSelect.value;
-            const episode = episodeSelect.value;
-            
-            if (!season || !episode) {
-                alert('Please select both season and episode');
-                return;
-            }
-            
-            if (streamSearch.currentTvShow) {
-                const url = `https://vidfast.pro/tv/${streamSearch.currentTvShow.id}/${season}/${episode}`;
-                streamSearch.playerTitle.textContent = `${streamSearch.currentTvShow.name || streamSearch.currentTvShow.title} - S${season}E${episode}`;
-                streamSearch.mediaPlayer.src = url;
-                streamSearch.playerContainer.classList.add('show');
-                streamSearch.scrollToPlayer();
-                closeModal();
-            }
         }
 
         let streamSearch;
